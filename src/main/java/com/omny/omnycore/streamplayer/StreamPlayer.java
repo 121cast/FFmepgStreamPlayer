@@ -8,7 +8,7 @@ package com.omny.omnycore.streamplayer;
  */
 public class StreamPlayer {
     static {
-        System.loadLibrary("libffmpeg");
+        System.loadLibrary("OmnyFFmpeg");
     }
 
     public native void prepare();

@@ -1,12 +1,7 @@
 #include <jni.h>
 
 #include <android/log.h>
-#include "libavformat/avformat.h"
-#include "libavcodec/avcodec.h"
-#include "libavutil/channel_layout.h"
-#include "libavutil/error.h"
-#include "libavutil/common.h"
-#include "libavutil/avutil.h"
+#include "include/libavformat/avformat.h"
 
 #define LOG_TAG "libffmpeg_native"
 #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, \
