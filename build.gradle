@@ -22,13 +22,15 @@ model {
 
     android.ndk {
         moduleName = "OmnyFFmpeg"
+        cppFlags.add("-I${file("src/main/jni/include")}".toString())
         CFlags.add("-I${file("src/main/jni/include")}".toString())
         ldLibs.addAll(["log", "ijkffmpeg"])
-        ldFlags.add("-L${file('src/main/jniLibs/armeabi-v7a')}".toString())
         ldFlags.add("-L${file('src/main/jniLibs/arm64-v8a')}".toString())
+        ldFlags.add("-L${file('src/main/jniLibs/armeabi-v7a')}".toString())
         ldFlags.add("-L${file('src/main/jniLibs/x86')}".toString())
         ldFlags.add("-L${file('src/main/jniLibs/x86_64')}".toString())
         abiFilters.addAll(["armeabi-v7a", "arm64-v8a", "x86", "x86_64"])
+        stl = "c++_shared"
     }
 //
 //    android.productFlavors {
