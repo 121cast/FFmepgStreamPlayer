@@ -20,7 +20,7 @@ public class FFmpegStream {
     }
 
     public native ByteBuffer create(String urlPath);
-    public native boolean prepare(ByteBuffer settings);
+    public native int prepare(ByteBuffer settings);
     public native boolean processNextPacket(ByteBuffer settings);
     public native short[] getNextAudioBuffer(ByteBuffer settings);
 }

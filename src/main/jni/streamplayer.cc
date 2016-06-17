@@ -95,14 +95,14 @@ Java_com_omny_omnycore_streamplayer_FFmpegStream_create(JNIEnv *env, jobject ins
     return env->NewDirectByteBuffer(settings, 0);
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jint JNICALL
 Java_com_omny_omnycore_streamplayer_FFmpegStream_prepare(JNIEnv *env, jobject instance, jobject handle) {
     StreamSettings* settings = (StreamSettings *) env->GetDirectBufferAddress(handle);
 
-    if (!prepareReader(settings)) return JNI_FALSE;
-    if (!prepareCodec(settings)) return JNI_FALSE;
+    if (!prepareReader(settings)) return -1;
+    if (!prepareCodec(settings)) return -1;
 
-    return JNI_TRUE;
+    return settings->codecContext->sample_rate;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -123,7 +123,9 @@ Java_com_omny_omnycore_streamplayer_FFmpegStream_processNextPacket(JNIEnv *env, 
         return JNI_FALSE;
     } else {
         // Add the packet to the queue.
-        settings->packetQueue.push(packet);
+        if (packet->stream_index == settings->stream->index) {
+            settings->packetQueue.push(packet);
+        }
         return JNI_TRUE;
     }
 }
@@ -143,6 +145,10 @@ Java_com_omny_omnycore_streamplayer_FFmpegStream_getNextAudioBuffer(JNIEnv *env,
     AVFrame* frame = av_frame_alloc();
     int decodedLength = avcodec_decode_audio4(settings->codecContext, frame, &gotFrame, packet);
 
+    if (decodedLength < packet->size) {
+        LOGE("HOLY, the decode size is too small!");
+    }
+
     av_packet_free(&packet); // Don't forget this one.
 
     if (checkAVError("Decode packet failed", decodedLength)) {
@@ -155,16 +161,18 @@ Java_com_omny_omnycore_streamplayer_FFmpegStream_getNextAudioBuffer(JNIEnv *env,
         // No data available at all? Skip this packet.
         if (frame->data == NULL) return NULL;
 
-        int dataSize = av_samples_get_buffer_size(&frame->linesize[0],
-                                                      settings->codecContext->channels,
-                                                      frame->nb_samples,
-                                                      AV_SAMPLE_FMT_S16,
-                                                      0);
-
-        short outPtr[dataSize];
+        // The size is critical, if we use wrong size then there will be either noisy or trimming.
+        int dataSize = frame->channels * frame->nb_samples;
+        short outPtr[dataSize]; // This means we'll alloc dataSize number of shorts.
         convert(frame, outPtr);
-        jshortArray retval = env->NewShortArray(dataSize);
-        env->SetShortArrayRegion(retval, 0, dataSize, outPtr);
+
+        av_frame_free(&frame);
+
+        jshortArray retval = env->NewShortArray(dataSize); // This means we'll have dataSize number of shorts.
+        env->SetShortArrayRegion(retval, 0, dataSize, outPtr); // This means we'll insert dataSize number of shorts into the region.
+
+        // All the above methods use dataSize as count instead of the byte size. Please be warned.
+
         return retval;
     }
 }
