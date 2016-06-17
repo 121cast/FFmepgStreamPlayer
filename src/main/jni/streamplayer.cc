@@ -6,6 +6,9 @@
 #define LOG_TAG "libffmpeg_native"
 #define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, \
                                              __VA_ARGS__))
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, \
+                                             __VA_ARGS__))
+
 jboolean checkAVError(string ctx, int errnum) {
     if (errnum < 0) {
         char str[AV_ERROR_MAX_STRING_SIZE];
@@ -146,7 +149,7 @@ Java_com_omny_omnycore_streamplayer_FFmpegStream_getNextAudioBuffer(JNIEnv *env,
     int decodedLength = avcodec_decode_audio4(settings->codecContext, frame, &gotFrame, packet);
 
     if (decodedLength < packet->size) {
-        LOGE("HOLY, the decode size is too small!");
+        LOGE("Whoops, the decode size is too small!");
     }
 
     av_packet_free(&packet); // Don't forget this one.
@@ -163,6 +166,7 @@ Java_com_omny_omnycore_streamplayer_FFmpegStream_getNextAudioBuffer(JNIEnv *env,
 
         // The size is critical, if we use wrong size then there will be either noisy or trimming.
         int dataSize = frame->channels * frame->nb_samples;
+
         short outPtr[dataSize]; // This means we'll alloc dataSize number of shorts.
         convert(frame, outPtr);
 
@@ -175,6 +179,15 @@ Java_com_omny_omnycore_streamplayer_FFmpegStream_getNextAudioBuffer(JNIEnv *env,
 
         return retval;
     }
+}
+
+
+JNIEXPORT void JNICALL
+Java_com_omny_omnycore_streamplayer_FFmpegStream_clearPacketQueue(JNIEnv *env, jobject instance, jobject handle) {
+    StreamSettings* settings = (StreamSettings *) env->GetDirectBufferAddress(handle);
+
+    std::queue<AVPacket *> empty;
+    std::swap(settings->packetQueue, empty);
 }
 
 };
