@@ -5,5 +5,5 @@
 #include "StreamSettings.h"
 
 StreamSettings::StreamSettings(void) {
-
+    this->isReleased = false;
 }

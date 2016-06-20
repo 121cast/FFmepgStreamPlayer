@@ -25,6 +25,7 @@ public:
     AVStream* stream;
     AVCodecContext* codecContext;
     queue<AVPacket*> packetQueue;
+    bool isReleased;
 };
 
 

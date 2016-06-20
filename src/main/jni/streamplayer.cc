@@ -112,6 +112,8 @@ JNIEXPORT jboolean JNICALL
 Java_com_omny_omnycore_streamplayer_FFmpegStream_processNextPacket(JNIEnv *env, jobject instance, jobject handle) {
     StreamSettings* settings = (StreamSettings *) env->GetDirectBufferAddress(handle);
 
+    if (settings->isReleased) return JNI_FALSE;
+
     AVPacket* packet = av_packet_alloc();
     int ret = av_read_frame(settings->context, packet);
 
@@ -137,7 +139,7 @@ JNIEXPORT jshortArray JNICALL
 Java_com_omny_omnycore_streamplayer_FFmpegStream_getNextAudioBuffer(JNIEnv *env, jobject instance, jobject handle) {
     StreamSettings* settings = (StreamSettings *) env->GetDirectBufferAddress(handle);
 
-    if (settings->packetQueue.empty())
+    if (settings->isReleased || settings->packetQueue.empty())
         return NULL;
 
     AVPacket *packet = settings->packetQueue.front();
@@ -188,6 +190,14 @@ Java_com_omny_omnycore_streamplayer_FFmpegStream_clearPacketQueue(JNIEnv *env, j
 
     std::queue<AVPacket *> empty;
     std::swap(settings->packetQueue, empty);
+}
+
+JNIEXPORT void JNICALL
+Java_com_omny_omnycore_streamplayer_FFmpegStream_release(JNIEnv *env, jobject instance, jobject handle) {
+    StreamSettings* settings = (StreamSettings *) env->GetDirectBufferAddress(handle);
+
+    settings->isReleased = true;
+    avformat_free_context(settings->context);
 }
 
 };
