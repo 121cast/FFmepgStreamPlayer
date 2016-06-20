@@ -24,4 +24,5 @@ public class FFmpegStream {
     public native boolean processNextPacket(ByteBuffer settings);
     public native short[] getNextAudioBuffer(ByteBuffer settings);
     public native void clearPacketQueue(ByteBuffer settings);
+    public native void release(ByteBuffer settings);
 }
